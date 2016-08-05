@@ -42,6 +42,12 @@ public class FlightResource {
 	}
 
 	@GET
+	@Path("carrier")
+	public List<String> fetchCarrier() {
+		return store.getCarriers();
+	}
+	
+	@GET
 	@Path("destination/{destination}")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Timed
