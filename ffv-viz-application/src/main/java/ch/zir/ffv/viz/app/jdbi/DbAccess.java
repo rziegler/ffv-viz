@@ -18,9 +18,14 @@ public interface DbAccess {
 	@SqlQuery("select distinct carrier from ffv.aggflights")
 	List<String> getCarriers();
 	
-	@SqlQuery("select * from ffv.aggflights f where f.destination = :destination and f.delta <= :delta")
-	List<AggFlightRecord> getFlightsForDestination(@Bind("destination") String carrier, @Bind("delta") int delta);
+	@SqlQuery("select distinct carrier from ffv.aggflights f where f.destination = :destination")
+	List<String> getCarriers(@Bind("destination") String destination);
 	
+	@SqlQuery("select * from ffv.aggflights f where f.destination = :destination and f.delta <= :delta")
+	List<AggFlightRecord> getFlightsForDestination(@Bind("destination") String destination, @Bind("delta") int delta);
+	
+	@SqlQuery("select * from ffv.aggflights f where f.destination = :destination and f.carrier = :carrier and f.delta <= :delta")
+	List<AggFlightRecord> getFlightsForDestinationAndCarrier(@Bind("destination") String destination, @Bind("carrier") String carrier, @Bind("delta") int delta);
 	
 
 }

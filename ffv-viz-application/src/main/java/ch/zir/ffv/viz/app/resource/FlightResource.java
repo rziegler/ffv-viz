@@ -1,7 +1,5 @@
 package ch.zir.ffv.viz.app.resource;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -22,8 +20,8 @@ import ch.zir.ffv.viz.app.jdbi.DbAccess;
 @Consumes(MediaType.APPLICATION_JSON)
 public class FlightResource {
 
-	private static final int DELTA_DAYS = 49;
 	private DbAccess store;
+	private FullFlightFilter filter = new FullFlightFilter();
 
 	public FlightResource(DbAccess store) {
 		this.store = store;
@@ -34,7 +32,7 @@ public class FlightResource {
 	public long fetch(@PathParam("carrier") String carrier) {
 		return store.countCarrier(carrier);
 	}
-	
+
 	@GET
 	@Path("destination")
 	public List<String> fetchDestination() {
@@ -46,62 +44,118 @@ public class FlightResource {
 	public List<String> fetchCarrier() {
 		return store.getCarriers();
 	}
+
+	@GET
+	@Path("carrier/{destination}")
+	public List<String> fetchCarrier(@PathParam("destination") String destination) {
+		return store.getCarriers(destination);
+	}
 	
 	@GET
 	@Path("destination/{destination}")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Timed
 	public List<FlightInformation> fetchFlights(@PathParam("destination") String destination) {
-		List<FlightInformation> result = processFlightsForDestination(destination);
-		return result;
+		return filter.filterFlights(store.getFlightsForDestination(destination, FullFlightFilter.DELTA_DAYS));
 	}
-	
+
+	@GET
+	@Path("destination/{destination}/{carrier}")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Timed
+	public List<FlightInformation> fetchFlights(@PathParam("destination") String destination, @PathParam("destination") String carrier) {
+		return filter.filterFlights(store.getFlightsForDestinationAndCarrier(destination, carrier, FullFlightFilter.DELTA_DAYS));
+	}
+
 	@GET
 	@Path("minhist/{destination}")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Timed
 	public int[] minhist(@PathParam("destination") String destination) {
-		List<FlightInformation> flights = processFlightsForDestination(destination);
-		int[] result = new int[DELTA_DAYS];
-		
-		for (FlightInformation fi : flights) {
-			double min = fi.getMinPrice();
-			for(int i = 0; i < DELTA_DAYS; i++){
-				if(fi.getPrices()[i].getPrice() == min){
-					result[i] = result[i]+1;
-					break;
-				}
-			}
-		}
-		return result;	
+		List<FlightInformation> flights = filter.filterFlights(store.getFlightsForDestination(destination, FullFlightFilter.DELTA_DAYS));
+		return DeltaHistogram.createHistogram(flights);
+	}
+
+	@GET
+	@Path("minhist/{destination}/{carrier}")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Timed
+	public int[] minhist(@PathParam("destination") String destination, @PathParam("carrier") String carrier) {
+		List<FlightInformation> flights = filter.filterFlights(store.getFlightsForDestinationAndCarrier(destination, carrier, FullFlightFilter.DELTA_DAYS));
+		return DeltaHistogram.createHistogram(flights);
+	}
+
+	@GET
+	@Path("min/{destination}/{carrier}")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Timed
+	public int minPrice(@PathParam("destination") String destination, @PathParam("carrier") String carrier) {
+		List<AggFlightRecord> flightsForDestinationAndCarrier = store.getFlightsForDestinationAndCarrier(destination, carrier, FullFlightFilter.DELTA_DAYS);
+		return MinPriceDelta.minPrice(flightsForDestinationAndCarrier);
+	}
+
+	@GET
+	@Path("min/{destination}/")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Timed
+	public int minPrice(@PathParam("destination") String destination) {
+		List<AggFlightRecord> flightsForDestinationAndCarrier = store.getFlightsForDestination(destination, FullFlightFilter.DELTA_DAYS);
+		return MinPriceDelta.minPrice(flightsForDestinationAndCarrier);
 	}
 	
-
-	private List<FlightInformation> processFlightsForDestination(String destination) {
-		List<FlightInformation> result = new ArrayList<>();
-		Map<String, FlightInformation> m = new HashMap<>();
-		for (AggFlightRecord afr : store.getFlightsForDestination(destination, DELTA_DAYS)) {
-
-			FlightInformation cf = m.get(afr.getId());
-			if (cf == null) {
-				cf = new FlightInformation(DELTA_DAYS);
-				cf.setCarrier(afr.getCarrier());
-				cf.setNumber(afr.getNumber());
-				cf.setDestination(afr.getDestination());
-				cf.setOrigin("ZHR");
-				cf.setDeparture(afr.getDeparture().getTime());
-				m.put(afr.getId(), cf);
-			}
-			cf.addPrice(afr.getPrice(), afr.getRequest().getTime(), afr.getDelta());
-
-		}
-		for (FlightInformation cf : m.values()) {
-			cf.compute();
-			if (cf.isComplete()) {
-				result.add(cf);
-			}
-		}
-		return result;
+	@GET
+	@Path("dayHistogramBook/{destination}/")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Timed
+	public Map<String, Integer> dayHistogramBook(@PathParam("destination") String destination) {
+		List<AggFlightRecord> records = store.getFlightsForDestination(destination, FullFlightFilter.DELTA_DAYS);
+		return DayHistogram.createDayHistogram(records);	
 	}
+
+	@GET
+	@Path("dayHistogramBook/{destination}/{carrier}")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Timed
+	public Map<String, Integer> dayHistogramBook(@PathParam("destination") String destination, @PathParam("carrier") String carrier) {
+		List<AggFlightRecord> records = store.getFlightsForDestinationAndCarrier(destination, carrier,FullFlightFilter.DELTA_DAYS);
+		return DayHistogram.createDayHistogram(records);	
+	}
+	
+	@GET
+	@Path("minWeekdayBook/{destination}/")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Timed
+	public String cheapestWeekDay(@PathParam("destination") String destination) {
+		List<AggFlightRecord> records = store.getFlightsForDestination(destination, FullFlightFilter.DELTA_DAYS);
+		return MinWeekdayBook.minWeekdayBook(records);
+	}
+
+	@GET
+	@Path("minWeekdayBook/{destination}/{carrier}")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Timed
+	public String cheapestWeekDay(@PathParam("destination") String destination, @PathParam("carrier") String carrier) {
+		List<AggFlightRecord> records = store.getFlightsForDestinationAndCarrier(destination, carrier, FullFlightFilter.DELTA_DAYS);
+		return MinWeekdayBook.minWeekdayBook(records);
+	}
+	
+	@GET
+	@Path("minWeekdayFlight/{destination}/")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Timed
+	public String cheapestWeekDayFlight(@PathParam("destination") String destination) {
+		List<AggFlightRecord> records = store.getFlightsForDestination(destination, FullFlightFilter.DELTA_DAYS);
+		return MinWeekdayFlight.minWeekdayFlight(records);
+	}
+
+	@GET
+	@Path("minWeekdayFlight/{destination}/{carrier}")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Timed
+	public String cheapestWeekDayFlight(@PathParam("destination") String destination, @PathParam("carrier") String carrier) {
+		List<AggFlightRecord> records = store.getFlightsForDestinationAndCarrier(destination, carrier, FullFlightFilter.DELTA_DAYS);
+		return MinWeekdayFlight.minWeekdayFlight(records);
+	}
+	
 
 }
