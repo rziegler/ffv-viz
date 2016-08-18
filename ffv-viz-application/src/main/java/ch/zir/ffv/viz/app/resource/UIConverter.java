@@ -16,12 +16,10 @@ public class UIConverter {
 		
 		for(FlightInformation flight:flights){
 			double diff = flight.getMaxPrice()-flight.getMinPrice();
-			double factor = Math.pow(2, 6) / diff;
-			
+			double slice = diff / 7.0;
 			for(Price price:flight.getPrices()){
 				UIFlight f = new UIFlight();
-				double bin = (price.getPrice() - flight.getMinPrice()) * factor;
-				f.setBin((int)(Math.log(bin+1)/Math.log(2))+1);
+				f.setBin((int)((price.getPrice() - flight.getMinPrice()) / slice));
 				f.setCarrier(flight.getCarrier());
 				f.setDeltaTime(price.getDelta());
 				f.setDepartureDate(sdfDate.format(new Date(flight.getDeparture())));
