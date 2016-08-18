@@ -1,16 +1,19 @@
 package ch.zir.ffv.viz.app.resource;
 
+import java.util.Arrays;
 import java.util.List;
-
-import ch.zir.ffv.viz.app.jdbi.AggFlightRecord;
 
 public class MinPriceDelta {
 	
-	public static int minPrice(List<AggFlightRecord> records) {
-		FullFlightFilter filter = new FullFlightFilter();
-		List<FlightInformation> flights = filter.filterFlights(records);
+	public static Statistic minPrice(List<FlightInformation> flights) {
 		int[] histogram = DeltaHistogram.createHistogram(flights);
-		return minDelta(histogram);
+		int minDelta = minDelta(histogram);
+		int sum = Arrays.stream(histogram).sum();
+
+		Statistic result = new Statistic();
+		result.setValue(Integer.toString( minDelta));
+		result.setPropability((double)histogram[minDelta-1]/(double)sum);
+		return result;
 	}
 
 	private static int minDelta(int[] histogram) {

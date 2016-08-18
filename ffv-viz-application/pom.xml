@@ -24,6 +24,7 @@
 			<artifactId>dropwizard-configurable-assets-bundle</artifactId>
 		</dependency>
 
+
 		<dependency>
 			<groupId>ch.zir</groupId>
 			<artifactId>ffv-viz-api</artifactId>
@@ -33,6 +34,14 @@
 			<groupId>org.mariadb.jdbc</groupId>
 			<artifactId>mariadb-java-client</artifactId>
 			<version>1.4.5</version>
+		</dependency>
+		<dependency>
+			<groupId>io.dropwizard.metrics</groupId>
+			<artifactId>metrics-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>io.dropwizard.metrics</groupId>
+			<artifactId>metrics-servlets</artifactId>
 		</dependency>
 
 		<dependency>
@@ -65,7 +74,7 @@
 						</goals>
 						<configuration>
 							<!-- Available backends are plaintext (default), swagger and asciidoc -->
-							<backend>plaintext</backend>
+							<backend>asciidoc</backend>
 						</configuration>
 					</execution>
 				</executions>

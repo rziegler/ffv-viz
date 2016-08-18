@@ -10,13 +10,10 @@ import java.util.Map.Entry;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 
-import ch.zir.ffv.viz.app.jdbi.AggFlightRecord;
-
 public class MinWeekdayFlight {
 	
-	public static String minWeekdayFlight(List<AggFlightRecord> records) {
-		FullFlightFilter filter = new FullFlightFilter();
-		List<FlightInformation> filtered = filter.filterFlights(records);
+	public static Statistic minWeekdayFlight(List<FlightInformation> filtered) {
+		
 		Long minDate = filtered.stream().map(x->x.getDeparture()).min(Long::compareTo).get();
 		int first = getDayInYear(new Date(minDate));
 		
@@ -27,7 +24,7 @@ public class MinWeekdayFlight {
 			groupedByWeek.put(week, fi);
 		}
 		SimpleDateFormat sdf = new SimpleDateFormat("EEE");
-		Map<String, Integer> result = new HashMap<>();
+		Map<String, Integer> histogram = new HashMap<>();
 		for(Integer week:groupedByWeek.keySet()){
 			String weekDay = "";
 			double min = Double.MAX_VALUE;
@@ -39,23 +36,28 @@ public class MinWeekdayFlight {
 				}
 			}
 			
-			if (result.containsKey(weekDay)) {
-				result.put(weekDay, result.get(weekDay) + 1);
+			if (histogram.containsKey(weekDay)) {
+				histogram.put(weekDay, histogram.get(weekDay) + 1);
 			} else {
-				result.put(weekDay, 1);
+				histogram.put(weekDay, 1);
 			}	
 		}
 		
 		String weekDay = "";
 		int count = 0;
-		for(Entry<String, Integer> entry:result.entrySet()){
+		for(Entry<String, Integer> entry:histogram.entrySet()){
 			if(entry.getValue() > count){
 				weekDay = entry.getKey();
 				count = entry.getValue();
 			}
 		}
 		
-		return weekDay;
+		int sum = histogram.values().stream().mapToInt(x->x).sum();
+		Statistic result = new Statistic();
+		result.setValue(weekDay);
+		result.setPropability((double)histogram.get(weekDay)/(double)sum);
+		
+		return result;
 	}
 
 	private static int getDayInYear(Date minDate) {

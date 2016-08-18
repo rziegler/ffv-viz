@@ -6,13 +6,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import ch.zir.ffv.viz.app.jdbi.AggFlightRecord;
-
 public class DayHistogram {
 
-	public static Map<String, Integer> createDayHistogram(List<AggFlightRecord> records) {
-		FullFlightFilter filter = new FullFlightFilter();
-		List<FlightInformation> flights = filter.filterFlights(records);
+	public static Map<String, Integer> createDayHistogram(List<FlightInformation> flights) {
 		Map<String, Integer> result = new HashMap<>();
 		SimpleDateFormat sdf = new SimpleDateFormat("EEE");
 

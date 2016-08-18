@@ -4,11 +4,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import ch.zir.ffv.viz.app.jdbi.AggFlightRecord;
-
 public class MinWeekdayBook {
 	
-	public static String minWeekdayBook(List<AggFlightRecord> records) {
+	public static Statistic minWeekdayBook(List<FlightInformation> records) {
 		Map<String, Integer> histogram = DayHistogram.createDayHistogram(records);	
 		
 		String weekDay = "";
@@ -19,8 +17,12 @@ public class MinWeekdayBook {
 				count = entry.getValue();
 			}
 		}
+		int sum = histogram.values().stream().mapToInt(x->x).sum();
+		Statistic result = new Statistic();
+		result.setValue(weekDay);
+		result.setPropability((double)histogram.get(weekDay)/(double)sum);
 		
-		return weekDay;
+		return result;
 	}
 	
 

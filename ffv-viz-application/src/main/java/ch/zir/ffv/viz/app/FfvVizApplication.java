@@ -50,12 +50,7 @@ public class FfvVizApplication extends Application<FfvVizConfiguration> {
 		filter.setInitParameter("allowedHeaders", "Content-Type,Authorization,X-Requested-With,Content-Length,Accept,Origin");
 		filter.setInitParameter("allowCredentials", "true");
 
-		// final VerbsResource verbsResource = new VerbsResource(store);
-		// environment.jersey().register(verbsResource);
-		//
-		// final TenseResource tenseResource = new TenseResource();
-		// environment.jersey().register(tenseResource);
-
+	
 		// TemplateHealthCheck healthCheck = new
 		// TemplateHealthCheck(configuration.getTemplate());
 		// environment.healthChecks().register("template", healthCheck);
