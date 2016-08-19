@@ -26,7 +26,7 @@ public class UIConverter {
 				f.setDepartureTime(sdfTime.format(new Date(flight.getDeparture())));
 				f.setDepartureWeekday(sdfDay.format(new Date(flight.getDeparture())));
 				f.setDestination(flight.getDestination());
-				f.setFlightNumber(flight.getNumber());
+				f.setFlightNumber(flight.getCarrier()+flight.getNumber());
 				f.setOrigin(flight.getOrigin());
 				f.setPrice(price.getPrice());
 				f.setRequestDate(sdfDate.format(new Date(price.getRequest())));
