@@ -25,9 +25,10 @@ public class FlightResource {
 
 	private DbAccess store;
 	private FullFlightFilter filter = new FullFlightFilter();
-	private Cache<String, List<FlightInformation>> cache = CacheBuilder.newBuilder().maximumSize(512).concurrencyLevel(5).expireAfterAccess(5, TimeUnit.HOURS)
+	private Cache<String, List<FlightInformation>> fiCache = CacheBuilder.newBuilder().maximumSize(512).concurrencyLevel(5).expireAfterAccess(5, TimeUnit.HOURS)
 			.build();
-
+	private Cache<String, Object> objCache = CacheBuilder.newBuilder().maximumSize(512).concurrencyLevel(5).expireAfterAccess(5, TimeUnit.HOURS)
+			.build();
 	public FlightResource(DbAccess store) {
 		this.store = store;
 	}
@@ -38,29 +39,33 @@ public class FlightResource {
 	 * @param carrier
 	 *            the carrier
 	 * @return
+	 * @throws ExecutionException 
 	 */
 	@GET
 	@Path("count/{carrier}")
-	public long fetch(@PathParam("carrier") String carrier) {
-		return store.countCarrier(carrier);
+	public long fetch(@PathParam("carrier") String carrier) throws ExecutionException {
+		return (Long)objCache.get("count-"+carrier, () -> store.countCarrier(carrier));
 	}
 
+	@SuppressWarnings("unchecked")
 	@GET
 	@Path("destination")
-	public List<String> fetchDestination() {
-		return store.getDestinations();
+	public List<String> fetchDestination() throws ExecutionException {
+		return (List<String>)objCache.get("destinations", () -> store.getDestinations());
 	}
 
+	@SuppressWarnings("unchecked")
 	@GET
 	@Path("carrier")
-	public List<String> fetchCarrier() {
-		return store.getCarriers();
+	public List<String> fetchCarrier() throws ExecutionException {
+		return (List<String>)objCache.get("carriers", () -> store.getCarriers());
 	}
 
+	@SuppressWarnings("unchecked")
 	@GET
 	@Path("carrier/{destination}")
-	public List<String> fetchCarrier(@PathParam("destination") String destination) {
-		return store.getCarriers(destination);
+	public List<String> fetchCarrier(@PathParam("destination") String destination) throws ExecutionException { 
+		return (List<String>)objCache.get("carrier-"+destination, ()->store.getCarriers(destination));
 	}
 
 	@GET
@@ -68,7 +73,7 @@ public class FlightResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Timed
 	public List<FlightInformation> fetchFlights(@PathParam("destination") String destination) {
-		return filter.filterFlights(store.getFlights(destination, FullFlightFilter.DELTA_DAYS));
+		return getFlightInformation(destination);
 	}
 
 	@GET
@@ -102,8 +107,7 @@ public class FlightResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Timed
 	public int[] minhist(@PathParam("destination") String destination) {
-		List<FlightInformation> flights = filter.filterFlights(store.getFlights(destination, FullFlightFilter.DELTA_DAYS));
-		return DeltaHistogram.createHistogram(flights);
+		return DeltaHistogram.createHistogram(getFlightInformation(destination));
 	}
 
 	@GET
@@ -150,7 +154,7 @@ public class FlightResource {
 	@Path("minWeekdayBook/{destination}/")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Timed
-	public Statistic cheapestWeekDay(@PathParam("destination") String destination) {
+	public Statistic cheapestWeekDayBook(@PathParam("destination") String destination) {
 		return MinWeekdayBook.minWeekdayBook(getFlightInformation(destination));
 	}
 
@@ -158,7 +162,7 @@ public class FlightResource {
 	@Path("minWeekdayBook/{destination}/{carrier}")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Timed
-	public Statistic cheapestWeekDay(@PathParam("destination") String destination, @PathParam("carrier") String carrier) {
+	public Statistic cheapestWeekDayBook(@PathParam("destination") String destination, @PathParam("carrier") String carrier) {
 		return MinWeekdayBook.minWeekdayBook(getFlightInformation(destination, carrier));
 	}
 
@@ -180,7 +184,7 @@ public class FlightResource {
 
 	private List<FlightInformation> getFlightInformation(String destination, String carrier) {
 		try {
-			return cache.get(cacheKey(destination, carrier), () -> filter.filterFlights(store.getFlights(destination, carrier, FullFlightFilter.DELTA_DAYS)));
+			return fiCache.get(cacheKey(destination, carrier), () -> filter.filterFlights(store.getFlights(destination, carrier, FullFlightFilter.DELTA_DAYS)));
 		} catch (ExecutionException e) {
 			throw new RuntimeException("Could not update Cache.", e);
 		}
@@ -188,7 +192,7 @@ public class FlightResource {
 
 	private List<FlightInformation> getFlightInformation(String destination) {
 		try {
-			return cache.get(cacheKey(destination), () -> filter.filterFlights(store.getFlights(destination, FullFlightFilter.DELTA_DAYS)));
+			return fiCache.get(cacheKey(destination), () -> filter.filterFlights(store.getFlights(destination, FullFlightFilter.DELTA_DAYS)));
 		} catch (ExecutionException e) {
 			throw new RuntimeException("Could not update Cache.", e);
 		}
