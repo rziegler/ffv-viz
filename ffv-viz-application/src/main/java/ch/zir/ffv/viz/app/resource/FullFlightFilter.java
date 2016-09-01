@@ -10,16 +10,15 @@ import ch.zir.ffv.viz.app.jdbi.AggFlightRecord;
 
 public class FullFlightFilter {
 	
-	public static final int DELTA_DAYS = 49;
 	
-	public List<FlightInformation> filterFlights(Collection<AggFlightRecord> records) {
+	public List<FlightInformation> filterFlights(Collection<AggFlightRecord> records, int delta) {
 		List<FlightInformation> result = new ArrayList<>();
 		Map<String, FlightInformation> m = new HashMap<>();
 		for (AggFlightRecord afr : records) {
 
 			FlightInformation cf = m.get(afr.getId());
 			if (cf == null) {
-				cf = new FlightInformation(DELTA_DAYS);
+				cf = new FlightInformation(delta);
 				cf.setCarrier(afr.getCarrier());
 				cf.setNumber(afr.getNumber());
 				cf.setDestination(afr.getDestination());

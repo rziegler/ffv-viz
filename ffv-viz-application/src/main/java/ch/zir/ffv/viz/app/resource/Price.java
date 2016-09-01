@@ -5,7 +5,7 @@ public class Price {
 	long request;
 	double price;
 	int delta;
-
+ 
 	public long getRequest() {
 		return request;
 	}

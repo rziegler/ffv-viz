@@ -6,7 +6,7 @@ import java.util.Map.Entry;
 
 public class MinWeekdayBook {
 	
-	public static Statistic minWeekdayBook(List<FlightInformation> records) {
+	public static Statistic minWeekdayBook(List<FlightInformation> records, int delta) {
 		Map<String, Integer> histogram = DayHistogram.createDayHistogram(records);	
 		
 		String weekDay = "";

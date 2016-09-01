@@ -3,7 +3,7 @@ package ch.zir.ffv.viz.app.resource;
 import java.util.Arrays;
 
 public class FlightInformation {
-
+ 
 	private String carrier;
 	private String number;
 	private String destination;

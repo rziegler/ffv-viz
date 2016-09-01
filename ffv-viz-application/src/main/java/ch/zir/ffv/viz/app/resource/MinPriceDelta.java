@@ -5,8 +5,8 @@ import java.util.List;
 
 public class MinPriceDelta {
 	
-	public static Statistic minPrice(List<FlightInformation> flights) {
-		int[] histogram = DeltaHistogram.createHistogram(flights);
+	public static Statistic minPrice(List<FlightInformation> flights, int delta) {
+		int[] histogram = DeltaHistogram.createHistogram(flights, delta);
 		int minDelta = minDelta(histogram);
 		int sum = Arrays.stream(histogram).sum();
 
