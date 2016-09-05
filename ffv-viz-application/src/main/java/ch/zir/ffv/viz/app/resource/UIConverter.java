@@ -30,6 +30,7 @@ public class UIConverter {
 				f.setOrigin(flight.getOrigin());
 				f.setPrice(price.getPrice());
 				f.setRequestDate(sdfDate.format(new Date(price.getRequest())));
+				f.setDts(flight.getDeparture());
 				result.add(f);
 			}
 		}
