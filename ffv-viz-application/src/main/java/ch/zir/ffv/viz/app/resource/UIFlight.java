@@ -8,6 +8,7 @@ public class UIFlight {
 	private String flightNumber;
 	private String departureDate;
 	private String departureTime;
+	private long dts;
 	private String departureWeekday;
 	private String requestDate;
 	private int deltaTime;
@@ -100,6 +101,14 @@ public class UIFlight {
 
 	public void setBin(int bin) {
 		this.bin = bin;
+	}
+	
+	public void setDts(long departureTimestamp) {
+		this.dts = departureTimestamp;
+	}
+	
+	public long getDts() {
+		return dts;
 	}
 
 }

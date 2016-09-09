@@ -16,7 +16,7 @@ public class UIConverter {
 		
 		for(FlightInformation flight:flights){
 			double diff = flight.getMaxPrice()-flight.getMinPrice();
-			double slice = diff / 7.0;
+			double slice = diff / 6.0;
 			for(Price price:flight.getPrices()){
 				UIFlight f = new UIFlight();
 				f.setBin((int)((price.getPrice() - flight.getMinPrice()) / slice));
@@ -30,6 +30,7 @@ public class UIConverter {
 				f.setOrigin(flight.getOrigin());
 				f.setPrice(price.getPrice());
 				f.setRequestDate(sdfDate.format(new Date(price.getRequest())));
+				f.setDts(flight.getDeparture());
 				result.add(f);
 			}
 		}
